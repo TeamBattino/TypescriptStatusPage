@@ -1,12 +1,35 @@
-import { appendToLog } from "./utils";
+import {
+  appendToLog,
+  checkAllServices,
+  checkServices,
+  readFileAsJson,
+  type Service,
+} from "./utils";
+
+// Javadoc style File Header
+/*
+ * Title: Typescript Status Page Application Entry Point
+ * Description: This is the main entry point for the application.
+ * Author: Florian Löw
+ * Version: 1.0.0
+ * Date: 8. April 2024
+ */
+
+// Handles Errors throughout the application
+
+const main = async () => {
+  const services: Service[] = await readFileAsJson(
+    process.env.SERICES_CONFIG_PATH ?? "services.json"
+  );
+  const status = await checkServices(services);
+  await appendToLog(JSON.stringify(status));
+};
 
 try {
-    console.log("Hello, world!");
-    //throw an error to test the catch block
-    throw new Error("This is an error");
+  await main();
+  await appendToLog("Service ran successfully");
+  console.info("Service ran successfully");
 } catch (error) {
-    console.log(error);
-    //append to log file "error.log"
-    await appendToLog(String(error));
-    process.exit(1);
+  await appendToLog(String(error));
+  console.error(error);
 }

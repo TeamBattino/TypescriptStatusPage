@@ -1,8 +1,26 @@
 [
-    "https://www.google.com/",
-    "https://www.youtube.com/",
-    "https://www.facebook.com/",
-    "https://www.baidu.com/",
-    "https://www.yahoo.com/",
-    "https://www.amazon.com/"
+        {
+            "name": "Google",
+            "url": "https://www.google.com/"
+        },
+        {
+            "name": "Youtube",
+            "url": "https://www.youtube.com/"
+        },
+        {
+            "name": "Facebook",
+            "url": "https://www.facebook.com/"
+        },
+        {
+            "name": "Twitter",
+            "url": "https://www.baidu.com/"
+        },
+        {
+            "name": "Yahoo",
+            "url": "https://www.yahoo.com/"
+        },
+        {
+            "name": "Amazon",
+            "url": "https://www.amazon.com/"
+        }
 ]

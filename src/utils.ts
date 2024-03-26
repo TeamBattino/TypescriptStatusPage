@@ -1,4 +1,5 @@
 import { appendFile, readFile, exists } from "node:fs/promises";
+import nodemailer from "nodemailer";
 /*
  * Title: Utils for the Status Page Application
  * Description: This file contains utility functions for the application.
@@ -69,4 +70,37 @@ async function checkService(service: Service): Promise<ServiceWithStatus> {
 // Check the status of a service, do this by sending a request to the service URL and checking the response. if the fetch fails the service is considered down.
 export async function checkServices(services: Service[]) {
   return Promise.all(services.map(checkService));
+}
+
+export function filterOfflineServices(servicesWithStatus: ServiceWithStatus[]) {
+  let offlineServices = servicesWithStatus.filter(
+    (service) => service.status !== "online"
+  );
+  return offlineServices;
+}
+
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT),
+  secure: false,
+  auth: {
+    user: process.env.SMTP_USERNAME,
+    pass: process.env.SMTP_PASSWORD,
+  },
+  logger: true,
+});
+
+export type MailContent = {
+  subject: string;
+  text: string;
+};
+
+export async function sendMail({ subject, text }: MailContent) {
+  let info = await transporter.sendMail({
+    from: `Status Notifier ${process.env.SMTP_SENDER}`, // sender address
+    to: process.env.WARNING_EMAIL_RECIPIENT, // list of receivers
+    subject: subject,
+    text: text,
+  });
+  if (info.rejected.length) appendToLog("ERROR: Mail send Failed");
 }

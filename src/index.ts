@@ -4,6 +4,9 @@ import {
   filterOfflineServices,
   readFileAsJson,
   sendMail,
+  servicesWithStatusToHTML,
+  servicesWithStatusToString,
+  writeFileOnRemoteServer,
   type Service,
 } from "./utils";
 
@@ -32,6 +35,14 @@ const main = async () => {
         offlineServices
       )}`,
     });
+  /*   await writeFileOnRemoteServer({
+    remoteFilePath: `${process.env.REMOTE_FILE_PATH}/status.json`,
+    content: servicesWithStatusToString(servicesWithStatus),
+  });
+  await writeFileOnRemoteServer({
+    remoteFilePath: `${process.env.REMOTE_FILE_PATH}/status.html`,
+    content: servicesWithStatusToHTML(servicesWithStatus),
+  }); */
 };
 
 // Handles Errors throughout the application

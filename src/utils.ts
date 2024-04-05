@@ -1,3 +1,6 @@
+import * as ssh2 from "ssh2";
+
+import { connect } from "bun";
 import { appendFile, readFile, exists } from "node:fs/promises";
 import nodemailer from "nodemailer";
 import SFTPClient from "ssh2-sftp-client";
@@ -132,14 +135,30 @@ type WriteFileOnRemoteServerProps = {
   remoteFilePath: string;
 };
 
-const sftpClient = new SFTPClient();
+export async function createSFTPClient() {
+  return new SFTPClient();
+}
+
+export async function connectSFTP(sftpClient: SFTPClient) {
+  console.log(`Connecting to ${sftpConfig.host}:${sftpConfig.port}`);
+  try {
+    const sftpWrapper = await sftpClient.connect(sftpConfig);
+    console.log("connected");
+    return sftpWrapper;
+  } catch (err) {
+    console.log("Failed to connect:", err);
+  }
+}
+
+export async function disconnectSFTP(sftpWrapper: ssh2.SFTPWrapper) {
+  await sftpWrapper.end();
+}
 
 // Write a file on a remote server
 export async function writeFileOnRemoteServer({
   content,
   remoteFilePath,
 }: WriteFileOnRemoteServerProps) {
-  const sftpWrapper = await sftpClient.connect(sftpConfig);
   sftpWrapper.writeFile(remoteFilePath, content, {
     flag: "w",
     encoding: "utf-8",
@@ -167,23 +186,23 @@ export function servicesWithStatusToHTML(
         case "offline":
         case "online":
           return `<div>
-                    <h2>${service.name}<h2>
-                    <p>${service.status}</p>
-                  </div>`;
+                      <h2>${service.name}<h2>
+                      <p>${service.status}</p>
+                    </div>`;
         case "error":
           return `<div>
-                    <h2>${service.name}<h2>
-                    <p>${service.status} - Code: ${service.statusCode}</p>
-                  </div>`;
+                      <h2>${service.name}<h2>
+                      <p>${service.status} - Code: ${service.statusCode}</p>
+                    </div>`;
       }
     })
     .join();
 
   return `<!DOCTYPE html> 
-          <html>
-            <body>
-              <h1>Status Page</h1>
-              ${servicesAsList}
-            </body>
-          </html>`;
+            <html>
+              <body>
+                <h1>Status Page</h1>
+                ${servicesAsList}
+              </body>
+            </html>`;
 }

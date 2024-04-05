@@ -1,6 +1,8 @@
 import {
   appendToLog,
   checkServices,
+  connectSFTP,
+  createSFTPClient,
   filterOfflineServices,
   readFileAsJson,
   sendMail,
@@ -35,7 +37,10 @@ const main = async () => {
         offlineServices
       )}`,
     });
-  /*   await writeFileOnRemoteServer({
+
+  let devServerConnection = connectSFTP(await createSFTPClient());
+
+  /* await writeFileOnRemoteServer({
     remoteFilePath: `${process.env.REMOTE_FILE_PATH}/status.json`,
     content: servicesWithStatusToString(servicesWithStatus),
   });
@@ -45,7 +50,7 @@ const main = async () => {
   }); */
 };
 
-// Handles Errors throughout the application
+// Catches and logs additional Errors throughout the application
 try {
   await main();
   await appendToLog("Service ran successfully");

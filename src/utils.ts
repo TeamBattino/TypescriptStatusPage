@@ -43,12 +43,12 @@ export type Service = {
 export type ServiceWithStatus = Service &
   (
     | {
-        status: "online" | "offline";
-      }
+      status: "online" | "offline";
+    }
     | {
-        status: "error";
-        statusCode: number;
-      }
+      status: "error";
+      statusCode: number;
+    }
   );
 
 // Check the status of a service, do this by sending a request to the service URL and checking the response. if the fetch fails the service is considered down.
@@ -130,39 +130,32 @@ const sftpConfig: SFTPClient.ConnectOptions = {
   password: process.env.SFTP_PASSWORD,
 };
 
-type WriteFileOnRemoteServerProps = {
-  content: string;
-  remoteFilePath: string;
-};
 
+
+
+// Create an SFTP Client
 export async function createSFTPClient() {
   return new SFTPClient();
 }
-
-export async function connectSFTP(sftpClient: SFTPClient) {
+type WriteSFTPProps =
+  {
+    content: string;
+    remoteFilePath: string;
+  };
+// Write content to a file on an SFTP Server
+export async function writeSFTP({ content, remoteFilePath }: WriteSFTPProps, sftpClient: SFTPClient) {
   console.log(`Connecting to ${sftpConfig.host}:${sftpConfig.port}`);
-  try {
-    const sftpWrapper = await sftpClient.connect(sftpConfig);
-    console.log("connected");
-    return sftpWrapper;
-  } catch (err) {
-    console.log("Failed to connect:", err);
-  }
-}
-
-export async function disconnectSFTP(sftpWrapper: ssh2.SFTPWrapper) {
-  await sftpWrapper.end();
-}
-
-// Write a file on a remote server
-export async function writeFileOnRemoteServer({
-  content,
-  remoteFilePath,
-}: WriteFileOnRemoteServerProps) {
-  sftpWrapper.writeFile(remoteFilePath, content, {
-    flag: "w",
-    encoding: "utf-8",
-  });
+  sftpClient.connect(sftpConfig)
+    .then(() => {
+      return sftpClient.put(Buffer.from(content), remoteFilePath, { writeStreamOptions: { flags: "w" } });
+    }).then(() => {
+      console.log('File written successfully');
+      appendToLog('File written successfully');
+      return sftpClient.end();
+    }).catch(e => {
+      console.error(e.message);
+      appendToLog(e.message)
+    });
 }
 
 /*

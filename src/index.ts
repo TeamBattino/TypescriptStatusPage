@@ -1,14 +1,13 @@
 import {
   appendToLog,
   checkServices,
-  connectSFTP,
+  writeSFTP,
   createSFTPClient,
   filterOfflineServices,
   readFileAsJson,
   sendMail,
   servicesWithStatusToHTML,
   servicesWithStatusToString,
-  writeFileOnRemoteServer,
   type Service,
 } from "./utils";
 
@@ -37,17 +36,18 @@ const main = async () => {
         offlineServices
       )}`,
     });
+  const client = await createSFTPClient();
+  await writeSFTP({ content: servicesWithStatusToString(servicesWithStatus), remoteFilePath: `${process.env.SFTP_REMOTE_PATH}/status.json` }, client).catch((error) => {
+    console.error(error);
+    appendToLog(String(error));
+  }
+  );
+  await writeSFTP({ content: servicesWithStatusToHTML(servicesWithStatus), remoteFilePath: `${process.env.SFTP_REMOTE_PATH}/status.html` }, client).catch((error) => {
+    console.error(error);
+    appendToLog(String(error));
+  }
+  )
 
-  let devServerConnection = connectSFTP(await createSFTPClient());
-
-  /* await writeFileOnRemoteServer({
-    remoteFilePath: `${process.env.REMOTE_FILE_PATH}/status.json`,
-    content: servicesWithStatusToString(servicesWithStatus),
-  });
-  await writeFileOnRemoteServer({
-    remoteFilePath: `${process.env.REMOTE_FILE_PATH}/status.html`,
-    content: servicesWithStatusToHTML(servicesWithStatus),
-  }); */
 };
 
 // Catches and logs additional Errors throughout the application

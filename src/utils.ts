@@ -1,3 +1,6 @@
+import * as ssh2 from "ssh2";
+
+import { connect } from "bun";
 import { appendFile, readFile, exists } from "node:fs/promises";
 import nodemailer from "nodemailer";
 import SFTPClient from "ssh2-sftp-client";
@@ -40,12 +43,12 @@ export type Service = {
 export type ServiceWithStatus = Service &
   (
     | {
-        status: "online" | "offline";
-      }
+      status: "online" | "offline";
+    }
     | {
-        status: "error";
-        statusCode: number;
-      }
+      status: "error";
+      statusCode: number;
+    }
   );
 
 // Check the status of a service, do this by sending a request to the service URL and checking the response. if the fetch fails the service is considered down.
@@ -127,23 +130,32 @@ const sftpConfig: SFTPClient.ConnectOptions = {
   password: process.env.SFTP_PASSWORD,
 };
 
-type WriteFileOnRemoteServerProps = {
-  content: string;
-  remoteFilePath: string;
-};
 
-const sftpClient = new SFTPClient();
 
-// Write a file on a remote server
-export async function writeFileOnRemoteServer({
-  content,
-  remoteFilePath,
-}: WriteFileOnRemoteServerProps) {
-  const sftpWrapper = await sftpClient.connect(sftpConfig);
-  sftpWrapper.writeFile(remoteFilePath, content, {
-    flag: "w",
-    encoding: "utf-8",
-  });
+
+// Create an SFTP Client
+export async function createSFTPClient() {
+  return new SFTPClient();
+}
+type WriteSFTPProps =
+  {
+    content: string;
+    remoteFilePath: string;
+  };
+// Write content to a file on an SFTP Server
+export async function writeSFTP({ content, remoteFilePath }: WriteSFTPProps, sftpClient: SFTPClient) {
+  console.log(`Connecting to ${sftpConfig.host}:${sftpConfig.port}`);
+  sftpClient.connect(sftpConfig)
+    .then(() => {
+      return sftpClient.put(Buffer.from(content), remoteFilePath, { writeStreamOptions: { flags: "w" } });
+    }).then(() => {
+      console.log('File written successfully');
+      appendToLog('File written successfully');
+      return sftpClient.end();
+    }).catch(e => {
+      console.error(e.message);
+      appendToLog(e.message)
+    });
 }
 
 /*
@@ -167,23 +179,23 @@ export function servicesWithStatusToHTML(
         case "offline":
         case "online":
           return `<div>
-                    <h2>${service.name}<h2>
-                    <p>${service.status}</p>
-                  </div>`;
+                      <h2>${service.name}<h2>
+                      <p>${service.status}</p>
+                    </div>`;
         case "error":
           return `<div>
-                    <h2>${service.name}<h2>
-                    <p>${service.status} - Code: ${service.statusCode}</p>
-                  </div>`;
+                      <h2>${service.name}<h2>
+                      <p>${service.status} - Code: ${service.statusCode}</p>
+                    </div>`;
       }
     })
     .join();
 
   return `<!DOCTYPE html> 
-          <html>
-            <body>
-              <h1>Status Page</h1>
-              ${servicesAsList}
-            </body>
-          </html>`;
+            <html>
+              <body>
+                <h1>Status Page</h1>
+                ${servicesAsList}
+              </body>
+            </html>`;
 }
